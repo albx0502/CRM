@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "807569332144",
+    "project_id": "crmapp-f5cbb",
+    "storage_bucket": "crmapp-f5cbb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:807569332144:android:2dc3052737f95019afa875",
+        "android_client_info": {
+          "package_name": "com.example.crm"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDOyUdzdus4LC4Py7ApUn353AClpcRtBoI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
