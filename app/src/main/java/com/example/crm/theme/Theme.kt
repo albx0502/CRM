@@ -1,4 +1,4 @@
-package com.example.crm.ui.theme
+package com.example.crm.theme
 
 import android.app.Activity
 import android.os.Build

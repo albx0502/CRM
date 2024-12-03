@@ -1,4 +1,4 @@
-package com.example.crm.ui.theme
+package com.example.crm.theme
 
 import androidx.compose.ui.graphics.Color
 
