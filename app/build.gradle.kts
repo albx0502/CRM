@@ -78,5 +78,9 @@ dependencies {
 
     implementation(libs.lottie.compose)
 
+    implementation (libs.google.firebase.auth)
+    implementation (libs.firebase.firestore)
+    implementation (libs.play.services.base)
+
 
 }

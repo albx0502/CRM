@@ -22,7 +22,7 @@ import com.example.crm.utils.loginWithFirebase
 
 @Composable
 fun LoginScreen(
-    onLoginSuccess: (Map<String, String>) -> Unit,
+    onLoginSuccess: (Map<String, Any>) -> Unit, // Cambiado a Map<String, Any>
     onRegisterClick: () -> Unit,
     onForgotPasswordClick: () -> Unit
 ) {
@@ -30,7 +30,6 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    // Manejador de enlaces externos (para las redes sociales)
     val uriHandler = LocalUriHandler.current
 
     Column(
@@ -119,7 +118,14 @@ fun LoginScreen(
         Button(
             onClick = {
                 // Lógica de login con Firebase
-                loginWithFirebase(email, password, onLoginSuccess, { errorMessage = it })
+                loginWithFirebase(
+                    email,
+                    password,
+                    onSuccess = { userData ->
+                        onLoginSuccess(userData) // Ajustado a Map<String, Any>
+                    },
+                    onError = { errorMessage = it }
+                )
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -139,7 +145,7 @@ fun LoginScreen(
         if (errorMessage != null) {
             Text(
                 text = errorMessage!!,
-                color = Color(0xFFF44336), // Rojo para errores
+                color = Color(0xFFF44336),
                 modifier = Modifier.padding(horizontal = 16.dp),
                 fontSize = 14.sp
             )
@@ -206,3 +212,4 @@ fun LoginScreen(
         }
     }
 }
+

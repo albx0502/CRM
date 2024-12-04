@@ -25,7 +25,6 @@ fun BottomNavigationBar(navController: NavController) {
             .height(64.dp),
         tonalElevation = 8.dp
     ) {
-        // Home Navigation Item
         NavigationBarItem(
             icon = {
                 Icon(
@@ -44,26 +43,24 @@ fun BottomNavigationBar(navController: NavController) {
             }
         )
 
-        // Calendario Navigation Item
         NavigationBarItem(
             icon = {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_calendar),
-                    contentDescription = "Calendario"
+                    contentDescription = "Simulador Citas"
                 )
             },
-            label = { Text("Calendario") },
-            selected = currentRoute == "calendar",
+            label = { Text("Citas") },
+            selected = currentRoute == "simuladorCitas",
             onClick = {
-                if (currentRoute != "calendar") {
-                    navController.navigate("calendar") {
+                if (currentRoute != "simuladorCitas") {
+                    navController.navigate("simuladorCitas") {
                         popUpTo("dashboard")
                     }
                 }
             }
         )
 
-        // Perfil Navigation Item
         NavigationBarItem(
             icon = {
                 Icon(

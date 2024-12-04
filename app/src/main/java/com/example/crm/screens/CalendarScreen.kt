@@ -13,7 +13,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.crm.activities.BottomNavigationBar
+//import com.example.crm.activities.BottomNavigationBar
 import java.util.*
 
 @Composable
@@ -35,9 +35,9 @@ fun CalendarScreen(navController: NavController?) {
     )
 
     Scaffold(
-        bottomBar = {
-            BottomNavigationBar(navController) // Agrega la barra de navegación inferior con la pantalla seleccionada
-        }
+//        bottomBar = {
+//            BottomNavigationBar(navController) // Agrega la barra de navegación inferior con la pantalla seleccionada
+//        }
     ) { paddingValues ->
         Column(
             modifier = Modifier

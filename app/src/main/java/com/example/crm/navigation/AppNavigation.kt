@@ -6,9 +6,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.crm.auth.ForgotPasswordScreen
 import com.example.crm.auth.LoginScreen
-import com.example.crm.auth.SignUpScreen
+import com.example.crm.auth.RegisterScreen
 import com.example.screens.CalendarScreen
 import com.example.crm.activities.DashboardScreen
+import com.example.crm.screens.SimuladorCitasScreen
 import com.example.screens.ProfileScreen
 import com.example.screens.SplashScreen
 import com.example.screens.WelcomeScreen
@@ -37,7 +38,7 @@ fun AppNavigation() {
 
         // Pantalla de registro
         composable("signup") {
-            SignUpScreen(
+            RegisterScreen(
                 onSignUpSuccess = { navController.navigate("login") },
                 onBackToLoginClick = { navController.navigate("login") }
             )
@@ -81,8 +82,13 @@ fun AppNavigation() {
         }
 
         // Pantalla de calendario
-        composable("calendar") {
-            CalendarScreen(navController)
+//        composable("calendar") {
+//            CalendarScreen(navController)
+//        }
+        // Pantalla de simulador de citas
+        composable("simuladorCitas") {
+            SimuladorCitasScreen(navController)
         }
+
     }
 }
