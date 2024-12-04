@@ -2,6 +2,7 @@ package com.example.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -22,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.crm.R
+import com.example.crm.activities.BottomNavigationBar
 
 @Composable
 fun ProfileScreen(navController: NavController) {
@@ -100,16 +102,16 @@ fun ProfileScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Nombre y usuario
+            // Nombre y usuario (puedes conectar estos datos con la clase User)
             Text(
-                text = "Akshay Rajput",
+                text = "Nombre del Usuario", // Sustituir con datos reales del usuario
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
             )
 
             Text(
-                text = "@rajputakshay8940",
+                text = "usuario@email.com", // Sustituir con datos reales del usuario
                 style = MaterialTheme.typography.bodySmall,
                 color = Color.Gray
             )
@@ -153,17 +155,18 @@ fun ProfileScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Opciones de la lista médica
+            // Opciones del perfil
             val options = listOf(
-                Pair("Citas recientes", R.drawable.ic_recent_appointments),
-                Pair("Chequeos Médicos", R.drawable.ic_medical_checkups),
-                Pair("Medicamentos Recetados", R.drawable.ic_medicine),
-                Pair("Especialidades Favoritas", R.drawable.ic_favorites),
-                Pair("Contactos Médicos", R.drawable.ic_contacts)
+                Pair("Citas recientes", R.drawable.ic_recent_appointments to { navController.navigate("appointments") }),
+                Pair("Chequeos Médicos", R.drawable.ic_medical_checkups to { navController.navigate("medical_checkups") }),
+                Pair("Medicamentos Recetados", R.drawable.ic_medicine to { navController.navigate("medications") }),
+                Pair("Especialidades Favoritas", R.drawable.ic_favorites to { navController.navigate("favorites") }),
+                Pair("Contactos Médicos", R.drawable.ic_contacts to { navController.navigate("medical_contacts") })
             )
 
-            options.forEach { (title, icon) ->
-                ProfileOptionItem(title = title, icon = painterResource(id = icon))
+            options.forEach { (title, pair) ->
+                val (icon, action) = pair
+                ProfileOptionItem(title = title, icon = painterResource(id = icon), onClick = action)
                 Spacer(modifier = Modifier.height(8.dp))
             }
         }
@@ -171,11 +174,16 @@ fun ProfileScreen(navController: NavController) {
 }
 
 @Composable
-fun ProfileOptionItem(title: String, icon: Painter) {
+fun ProfileOptionItem(
+    title: String,
+    icon: Painter,
+    onClick: () -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp), // Reduce el espacio vertical para que todos los elementos quepan mejor, es una buena opción
+            .padding(vertical = 4.dp)
+            .clickable { onClick() },
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = Color(0xFFF7F8FA))
     ) {
@@ -189,7 +197,7 @@ fun ProfileOptionItem(title: String, icon: Painter) {
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Image( // Cambio de Icon a Image para asegurarse de que los recursos sean imágenes en lugar de íconos vectoriales.
+                Image(
                     painter = icon,
                     contentDescription = title,
                     modifier = Modifier.size(32.dp)
@@ -203,11 +211,10 @@ fun ProfileOptionItem(title: String, icon: Painter) {
                 )
             }
             Icon(
-                imageVector = Icons.Default.ArrowForward, //Esto es un icono vectorial de la flecha que va hacia delante
+                imageVector = Icons.Default.ArrowForward,
                 contentDescription = "Ir a $title",
                 tint = Color.Gray
             )
         }
     }
 }
-

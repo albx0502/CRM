@@ -1,10 +1,7 @@
 package com.example.screens
 
-
-
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
-
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,7 +19,7 @@ import com.example.crm.R
 fun SplashScreen(onTimeout: () -> Unit) {
     // Ejecutamos un delay para simular el tiempo de carga
     LaunchedEffect(Unit) {
-        delay(3000) // 3 segundos de espera
+        delay(1000) // 3 segundos de espera
         onTimeout() // Llamamos a la acción de navegación
     }
 
@@ -36,13 +33,12 @@ fun SplashScreen(onTimeout: () -> Unit) {
     ) {
         // Imagen del logo
         Image(
-            painter = painterResource(id = R.drawable.cross_image),
-            contentDescription = "Cruz SaludConnect",
-            modifier = Modifier.size(75.dp)
+            painter = painterResource(id = R.drawable.cross_image), // Cambia esto según el recurso que tengas
+            contentDescription = "Logo SaludConnect",
+            modifier = Modifier.size(100.dp) // Tamaño ajustado para mejor visibilidad
         )
 
         Spacer(modifier = Modifier.height(16.dp))
-
 
         // Título de la aplicación
         Text(
@@ -51,7 +47,9 @@ fun SplashScreen(onTimeout: () -> Unit) {
             color = Color.Black
         )
 
-// Subtítulo de la aplicación
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Subtítulo de la aplicación
         Text(
             text = "“Innovación en la gestión de salud a tu alcance”",
             style = MaterialTheme.typography.bodyLarge,

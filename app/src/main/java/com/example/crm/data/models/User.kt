@@ -1,9 +1,10 @@
 package com.example.crm.data.models
 
+import com.example.crm.R
+
 data class User(
-    val id: String = "", // UID del usuario en Firebase
-    val name: String = "",
-    val email: String = "",
-    val role: String = "usuario", // Rol por defecto
-    val profilePictureUrl: String? = null // Opcional para imágenes de perfil
+    val name: String,
+    val username: String,
+    val email: String,
+    val profileImage: Int = R.drawable.ic_profile_avatar // Imagen por defecto
 )

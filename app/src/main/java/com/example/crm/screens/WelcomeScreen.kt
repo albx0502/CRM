@@ -27,9 +27,9 @@ fun WelcomeScreen(onRegisterClick: () -> Unit, onLoginClick: () -> Unit) {
     ) {
         // Logo de bienvenida
         Image(
-            painter = painterResource(id = R.drawable.cross_image),
+            painter = painterResource(id = R.drawable.cross_image), // Cambia según tu recurso
             contentDescription = "Logo SaludConnect",
-            modifier = Modifier.size(80.dp)
+            modifier = Modifier.size(100.dp) // Ajusté el tamaño para mayor visibilidad
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -54,9 +54,11 @@ fun WelcomeScreen(onRegisterClick: () -> Unit, onLoginClick: () -> Unit) {
 
         // Imagen principal de bienvenida
         Image(
-            painter = painterResource(id = R.drawable.welcome_image),
+            painter = painterResource(id = R.drawable.welcome_image), // Cambia según tu recurso
             contentDescription = "Imagen de bienvenida",
-            modifier = Modifier.fillMaxWidth().height(200.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
         )
 
         Spacer(modifier = Modifier.height(24.dp))

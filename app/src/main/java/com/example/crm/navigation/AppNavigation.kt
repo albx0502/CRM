@@ -7,13 +7,11 @@ import androidx.navigation.compose.rememberNavController
 import com.example.crm.auth.ForgotPasswordScreen
 import com.example.crm.auth.LoginScreen
 import com.example.crm.auth.SignUpScreen
-import com.example.crm.screens.HomeScreen
 import com.example.screens.CalendarScreen
-import com.example.screens.DashboardActivity
+import com.example.crm.activities.DashboardScreen
 import com.example.screens.ProfileScreen
 import com.example.screens.SplashScreen
 import com.example.screens.WelcomeScreen
-import com.google.firebase.auth.FirebaseAuth
 
 @Composable
 fun AppNavigation() {
@@ -28,6 +26,7 @@ fun AppNavigation() {
                 }
             }
         }
+
         // Pantalla de bienvenida
         composable("welcome") {
             WelcomeScreen(
@@ -35,6 +34,7 @@ fun AppNavigation() {
                 onLoginClick = { navController.navigate("login") }
             )
         }
+
         // Pantalla de registro
         composable("signup") {
             SignUpScreen(
@@ -42,41 +42,47 @@ fun AppNavigation() {
                 onBackToLoginClick = { navController.navigate("login") }
             )
         }
+
         // Pantalla de inicio de sesión
         composable("login") {
             LoginScreen(
-                onLoginClick = {
+                onLoginSuccess = { userData ->
                     navController.navigate("dashboard") {
                         popUpTo("login") { inclusive = true }
                     }
                 },
-                onSignUpClick = { navController.navigate("signup") },
+                onRegisterClick = { navController.navigate("signup") },
                 onForgotPasswordClick = { navController.navigate("forgotPassword") }
             )
         }
+
+
+
         // Pantalla de recuperación de contraseña
         composable("forgotPassword") {
             ForgotPasswordScreen(
-                onBackToLoginClick = { navController.navigate("login") }
+                onSendLinkClick = {
+                    navController.navigate("login") {
+                        popUpTo("forgotPassword") { inclusive = true }
+                    }
+                },
+                onBackClick = { navController.navigate("login") }
             )
         }
+
         // Dashboard principal
         composable("dashboard") {
-            DashboardActivity(navController)
+            DashboardScreen(navController)
         }
+
         // Pantalla de perfil
         composable("profile") {
-            ProfileScreen(
-                onLogoutClick = {
-                    navController.navigate("login") {
-                        popUpTo("dashboard") { inclusive = true }
-                    }
-                }
-            )
+            ProfileScreen(navController)
         }
+
         // Pantalla de calendario
         composable("calendar") {
-            CalendarScreen()
+            CalendarScreen(navController)
         }
     }
 }

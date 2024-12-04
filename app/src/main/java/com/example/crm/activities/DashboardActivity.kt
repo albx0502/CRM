@@ -1,5 +1,4 @@
-package com.example.screens
-
+package com.example.crm.activities
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -16,14 +15,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.NavController
 import com.example.crm.R
-import com.github.mikephil.charting.charts.LineChart
-import com.github.mikephil.charting.data.Entry
-import com.github.mikephil.charting.data.LineData
-import com.github.mikephil.charting.data.LineDataSet
-
 
 class DashboardActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,6 +30,7 @@ class DashboardActivity : ComponentActivity() {
 @Composable
 fun DashboardScreen(navController: NavController?) {
     Scaffold(
+
         bottomBar = {
             BottomNavigationBar(navController) // Pasamos el NavController aquí
         }
@@ -72,7 +66,7 @@ fun DashboardScreen(navController: NavController?) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Visión General de citas - Gráfico
+            // Visión General de citas - Gráfico (placeholder temporal)
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -92,34 +86,11 @@ fun DashboardScreen(navController: NavController?) {
                     )
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    // Creación del gráfico utilizando MPAndroidChart
-                    val entries = listOf(
-                        Entry(1f, 5f),
-                        Entry(2f, 3f),
-                        Entry(3f, 4f),
-                        Entry(4f, 6f)
+                    Text(
+                        text = "El gráfico será implementado más tarde.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Color.Gray
                     )
-                    val dataSet = LineDataSet(entries, "Consultas").apply {
-                        color = android.graphics.Color.MAGENTA
-                        setCircleColor(android.graphics.Color.MAGENTA)
-                    }
-                    val lineData = LineData(dataSet)
-
-                    AndroidView(
-                        factory = { context ->
-                            LineChart(context).apply {
-                                data = lineData
-                                description.text = "Gráfico de Citas" // Añadir descripción
-                                setDrawGridBackground(false)
-                                setTouchEnabled(true)
-                                setPinchZoom(true)
-                            }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(200.dp)
-                    )
-
                 }
             }
 
@@ -199,12 +170,9 @@ fun DashboardScreen(navController: NavController?) {
             }
 
             Spacer(modifier = Modifier.height(8.dp))
-
-
-                }
-            }
         }
-
+    }
+}
 
 @Composable
 fun BottomNavigationBar(navController: NavController?) {
@@ -224,7 +192,7 @@ fun BottomNavigationBar(navController: NavController?) {
                 )
             },
             label = { Text("Home") },
-            selected = false, // Controla si está seleccionado según la pantalla actual
+            selected = false,
             onClick = {
                 navController?.navigate("dashboard") {
                     popUpTo("dashboard") { inclusive = true }
@@ -243,7 +211,7 @@ fun BottomNavigationBar(navController: NavController?) {
             label = { Text("Calendario") },
             selected = false,
             onClick = {
-                // Implementa la navegación a la pantalla de calendario
+                navController?.navigate("calendar") // Implementa la navegación al calendario
             }
         )
 
