@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.crm.activities.CitaDetalleScreen
 import com.example.crm.auth.ForgotPasswordScreen
 import com.example.crm.auth.LoginScreen
 import com.example.crm.auth.RegisterScreen
@@ -88,6 +89,11 @@ fun AppNavigation() {
         composable("simuladorCitas") {
             SimuladorCitasScreen(navController)
         }
+        composable("citaDetalle/{citaId}") { backStackEntry ->
+            val citaId = backStackEntry.arguments?.getString("citaId") ?: return@composable
+            CitaDetalleScreen(citaId = citaId, navController = navController)
+        }
+
 
     }
 }
