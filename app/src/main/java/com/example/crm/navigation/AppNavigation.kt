@@ -7,10 +7,9 @@ import androidx.navigation.compose.rememberNavController
 import com.example.crm.auth.ForgotPasswordScreen
 import com.example.crm.auth.LoginScreen
 import com.example.crm.auth.RegisterScreen
-import com.example.screens.CalendarScreen
 import com.example.crm.activities.DashboardScreen
 import com.example.crm.screens.SimuladorCitasScreen
-import com.example.screens.ProfileScreen
+import com.example.crm.screens.ProfileScreen
 import com.example.screens.SplashScreen
 import com.example.screens.WelcomeScreen
 

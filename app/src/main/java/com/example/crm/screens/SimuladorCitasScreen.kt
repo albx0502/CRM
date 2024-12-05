@@ -8,7 +8,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.navigation.NavController
 import com.example.crm.components.BottomNavigationBar
 import com.example.crm.utils.addCita
@@ -33,15 +32,25 @@ fun SimuladorCitasScreen(navController: NavController) {
     // Cargar datos desde Firebase
     LaunchedEffect(Unit) {
         val db = FirebaseFirestore.getInstance()
-        db.collection("especialidades").get().addOnSuccessListener { result ->
-            especialidades.clear()
-            especialidades.addAll(result.map { it.id })
-        }
+        db.collection("especialidades")
+            .get()
+            .addOnSuccessListener { result ->
+                especialidades.clear()
+                especialidades.addAll(result.map { it.id })
+            }
+            .addOnFailureListener { e ->
+                errorMessage = "Error al cargar especialidades: ${e.message}"
+            }
 
-        db.collection("medicos").get().addOnSuccessListener { result ->
-            medicos.clear()
-            medicos.addAll(result.map { it.getString("nombre") ?: "Desconocido" })
-        }
+        db.collection("medicos")
+            .get()
+            .addOnSuccessListener { result ->
+                medicos.clear()
+                medicos.addAll(result.map { it.getString("nombre") ?: "Desconocido" })
+            }
+            .addOnFailureListener { e ->
+                errorMessage = "Error al cargar médicos: ${e.message}"
+            }
     }
 
     Scaffold(
@@ -133,19 +142,22 @@ fun DropdownSelector(
     selectedOption: String,
     onOptionSelected: (String) -> Unit
 ) {
-    var expanded by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(false) } // Controla si el menú está expandido
 
-    Column {
+    // Caja completa clicable
+    Box(modifier = Modifier.fillMaxWidth().clickable { expanded = true }) {
+        // TextField para mostrar el texto seleccionado
         OutlinedTextField(
             value = selectedOption,
             onValueChange = {},
             label = { Text(label) },
-            readOnly = true,
+            readOnly = true, // Evita la entrada manual
             modifier = Modifier
-                .fillMaxWidth()
-                .clickable { expanded = true }
+                .fillMaxWidth() // Asegura que ocupe todo el ancho disponible
+                .clickable { expanded = true } // Expande el menú al hacer clic
         )
 
+        // Menú desplegable
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false }

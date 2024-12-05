@@ -5,11 +5,15 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.example.crm.navigation.AppNavigation
 import com.example.crm.theme.CRMTheme
+import com.google.firebase.firestore.FirebaseFirestore
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        println("MainActivity has started successfully") // Para depuración
+
+        // Activar el registro de logs para Firebase Firestore
+        FirebaseFirestore.setLoggingEnabled(true)
+
         setContent {
             CRMTheme {
                 AppNavigation()

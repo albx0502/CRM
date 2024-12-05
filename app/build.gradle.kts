@@ -81,6 +81,10 @@ dependencies {
     implementation (libs.google.firebase.auth)
     implementation (libs.firebase.firestore)
     implementation (libs.play.services.base)
+    implementation (libs.play.services.auth)
+    implementation(libs.firebase.auth.ktx)
+    implementation(libs.firebase.storage.ktx)
+
 
 
 }
