@@ -32,11 +32,13 @@ fun SimuladorCitasScreen(navController: NavController) {
     // Variables para cargar opciones dinámicamente
     val especialidades = remember { mutableStateListOf<Pair<String, String>>() }
     val medicos = remember { mutableStateListOf<Pair<String, String>>() }
+    val medicosFiltrados = remember { mutableStateListOf<Pair<String, String>>() }
 
     // Cargar datos desde Firebase
     LaunchedEffect(Unit) {
         val db = FirebaseFirestore.getInstance()
 
+        // Cargar especialidades
         db.collection("especialidades")
             .get()
             .addOnSuccessListener { result ->
@@ -47,6 +49,7 @@ fun SimuladorCitasScreen(navController: NavController) {
                 errorMessage = "Error al cargar especialidades: ${e.message}"
             }
 
+        // Cargar médicos
         db.collection("medicos")
             .get()
             .addOnSuccessListener { result ->
@@ -57,6 +60,26 @@ fun SimuladorCitasScreen(navController: NavController) {
                 errorMessage = "Error al cargar médicos: ${e.message}"
             }
     }
+
+    // Filtrar médicos según la especialidad seleccionada
+    LaunchedEffect(especialidadId) {
+        medicosFiltrados.clear() // Limpiar la lista antes de filtrar
+        if (especialidadId.isNotEmpty()) {
+            val db = FirebaseFirestore.getInstance()
+
+            // Filtrar médicos por especialidad
+            db.collection("medicos")
+                .whereEqualTo("especialidad_id", especialidadId) // Filtra directamente desde Firestore
+                .get()
+                .addOnSuccessListener { result ->
+                    medicosFiltrados.addAll(result.map { it.id to (it.getString("nombre") ?: "Desconocido") })
+                }
+                .addOnFailureListener { e ->
+                    println("Error al filtrar médicos: ${e.message}")
+                }
+        }
+    }
+
 
     Scaffold(
         bottomBar = { BottomNavigationBar(navController = navController) }
@@ -92,7 +115,7 @@ fun SimuladorCitasScreen(navController: NavController) {
 
             SimpleDropdownSelector(
                 label = "Selecciona una especialidad",
-                options = especialidades.map { it.second }, // Mostrar nombres
+                options = especialidades.map { it.second },
                 selectedOption = especialidadNombre,
                 onOptionSelected = { selected ->
                     especialidadNombre = selected
@@ -100,19 +123,17 @@ fun SimuladorCitasScreen(navController: NavController) {
                 }
             )
 
-
             Spacer(modifier = Modifier.height(16.dp))
 
             SimpleDropdownSelector(
                 label = "Selecciona un médico",
-                options = medicos.map { it.second }, // Mostrar nombres
+                options = medicosFiltrados.map { it.second },
                 selectedOption = medicoNombre,
                 onOptionSelected = { selected ->
                     medicoNombre = selected
-                    medicoId = medicos.firstOrNull { it.second == selected }?.first.orEmpty()
+                    medicoId = medicosFiltrados.firstOrNull { it.second == selected }?.first.orEmpty()
                 }
             )
-
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -150,5 +171,3 @@ fun SimuladorCitasScreen(navController: NavController) {
         }
     }
 }
-
-

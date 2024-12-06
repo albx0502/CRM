@@ -16,29 +16,54 @@ import com.google.firebase.firestore.FirebaseFirestore
 @Composable
 fun MedicationsScreen(navController: NavController) {
     val userId = FirebaseAuth.getInstance().currentUser?.uid.orEmpty()
-    val medicamentos = remember { mutableStateListOf<Map<String, String>>() }
+    val medicamentosDisponibles = remember { mutableStateListOf<Map<String, String?>>() }
+    val medicamentosUsuario = remember { mutableStateListOf<Map<String, String?>>() }
     val errorMessage = remember { mutableStateOf<String?>(null) }
+    val medicamentosNombresUsuario = remember { mutableStateListOf<String>() } // Almacena los nombres de medicamentos para evitar duplicados
 
-    // Cargar medicamentos desde Firestore
+    // Cargar medicamentos disponibles y del usuario desde Firestore
     LaunchedEffect(Unit) {
         val db = FirebaseFirestore.getInstance()
-        db.collection("medicamentos")
-            .whereEqualTo("paciente_id", userId)
+        db.collection("medicamentos_disponibles")
             .get()
             .addOnSuccessListener { result ->
-                medicamentos.clear()
+                medicamentosDisponibles.clear()
                 for (document in result) {
-                    medicamentos.add(
+                    medicamentosDisponibles.add(
                         mapOf(
-                            "nombre" to (document.getString("nombre") ?: "Desconocido"),
-                            "descripcion" to (document.getString("descripcion") ?: "Sin descripción"),
-                            "indicaciones" to (document.getString("indicaciones") ?: "Sin indicaciones")
+                            "id" to document.id,
+                            "nombre" to document.getString("nombre"),
+                            "descripcion" to document.getString("descripcion"),
+                            "indicaciones" to document.getString("indicaciones")
                         )
                     )
                 }
             }
             .addOnFailureListener { e ->
-                errorMessage.value = "Error al cargar medicamentos: ${e.message}"
+                errorMessage.value = "Error al cargar medicamentos disponibles: ${e.message}"
+            }
+
+        db.collection("medicamentos")
+            .whereEqualTo("paciente_id", userId)
+            .get()
+            .addOnSuccessListener { result ->
+                medicamentosUsuario.clear()
+                medicamentosNombresUsuario.clear()
+                for (document in result) {
+                    val nombre = document.getString("nombre") ?: "Desconocido"
+                    medicamentosUsuario.add(
+                        mapOf(
+                            "id" to document.id,
+                            "nombre" to nombre,
+                            "descripcion" to document.getString("descripcion"),
+                            "indicaciones" to document.getString("indicaciones")
+                        )
+                    )
+                    medicamentosNombresUsuario.add(nombre)
+                }
+            }
+            .addOnFailureListener { e ->
+                errorMessage.value = "Error al cargar tus medicamentos: ${e.message}"
             }
     }
 
@@ -57,22 +82,78 @@ fun MedicationsScreen(navController: NavController) {
                 .padding(16.dp)
         ) {
             if (errorMessage.value != null) {
+                // Mostrar el mensaje de error en un texto visible pero no bloquear la pantalla
                 Text(
                     text = errorMessage.value ?: "Error desconocido",
-                    color = MaterialTheme.colorScheme.error
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.padding(bottom = 8.dp)
                 )
-            } else if (medicamentos.isEmpty()) {
-                Text(
-                    text = "No tienes medicamentos recetados.",
-                    style = MaterialTheme.typography.bodyLarge
-                )
-            } else {
+            }
+
+            // Mostrar medicamentos del usuario
+            Text("Tus Medicamentos", style = MaterialTheme.typography.headlineSmall)
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) {
                 LazyColumn {
-                    items(medicamentos) { medicamento ->
-                        MedicamentoCard(
-                            nombre = medicamento["nombre"] ?: "Desconocido",
-                            descripcion = medicamento["descripcion"] ?: "Sin descripción",
-                            indicaciones = medicamento["indicaciones"] ?: "Sin indicaciones"
+                    items(medicamentosUsuario) { medicamento ->
+                        MedicamentoUsuarioCard(
+                            medicamento = medicamento,
+                            onDeleteClick = { medicamentoId ->
+                                val db = FirebaseFirestore.getInstance()
+                                db.collection("medicamentos").document(medicamentoId)
+                                    .delete()
+                                    .addOnSuccessListener {
+                                        medicamentosUsuario.removeIf { it["id"] == medicamentoId }
+                                        medicamentosNombresUsuario.remove(medicamento["nombre"])
+                                    }
+                                    .addOnFailureListener { e ->
+                                        errorMessage.value = "Error al eliminar medicamento: ${e.message}"
+                                    }
+                            }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Mostrar medicamentos disponibles
+            Text("Medicamentos Disponibles", style = MaterialTheme.typography.headlineSmall)
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) {
+                LazyColumn {
+                    items(medicamentosDisponibles) { medicamento ->
+                        MedicamentoDisponibleCard(
+                            medicamento = medicamento,
+                            onAddClick = { selectedMedicamento ->
+                                if (medicamentosNombresUsuario.contains(selectedMedicamento["nombre"])) {
+                                    errorMessage.value = "Ya has añadido este medicamento."
+                                } else {
+                                    val db = FirebaseFirestore.getInstance()
+                                    val nuevoMedicamento = mapOf(
+                                        "nombre" to selectedMedicamento["nombre"],
+                                        "descripcion" to selectedMedicamento["descripcion"],
+                                        "indicaciones" to selectedMedicamento["indicaciones"],
+                                        "paciente_id" to userId
+                                    )
+                                    db.collection("medicamentos")
+                                        .add(nuevoMedicamento)
+                                        .addOnSuccessListener { documentReference ->
+                                            medicamentosUsuario.add(nuevoMedicamento + ("id" to documentReference.id))
+                                            medicamentosNombresUsuario.add(selectedMedicamento["nombre"] ?: "")
+                                        }
+                                        .addOnFailureListener { e ->
+                                            errorMessage.value = "Error al añadir medicamento: ${e.message}"
+                                        }
+                                }
+                            }
                         )
                     }
                 }
@@ -81,8 +162,13 @@ fun MedicationsScreen(navController: NavController) {
     }
 }
 
+
+
 @Composable
-fun MedicamentoCard(nombre: String, descripcion: String, indicaciones: String) {
+fun MedicamentoUsuarioCard(
+    medicamento: Map<String, String?>,
+    onDeleteClick: (String) -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -90,11 +176,59 @@ fun MedicamentoCard(nombre: String, descripcion: String, indicaciones: String) {
         elevation = CardDefaults.cardElevation(4.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = "Nombre: $nombre", style = MaterialTheme.typography.bodyLarge)
+            Text(text = "Nombre: ${medicamento["nombre"]}", style = MaterialTheme.typography.bodyLarge)
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "Descripción: $descripcion", style = MaterialTheme.typography.bodyMedium)
+            Text(
+                text = "Descripción: ${medicamento["descripcion"]}",
+                style = MaterialTheme.typography.bodyMedium
+            )
             Spacer(modifier = Modifier.height(8.dp))
-            Text(text = "Indicaciones: $indicaciones", style = MaterialTheme.typography.bodyMedium)
+            Text(
+                text = "Indicaciones: ${medicamento["indicaciones"]}",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = { onDeleteClick(medicamento["id"] ?: "") },
+                modifier = Modifier.fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(MaterialTheme.colorScheme.error)
+            ) {
+                Text("Eliminar")
+            }
+        }
+    }
+}
+
+@Composable
+fun MedicamentoDisponibleCard(
+    medicamento: Map<String, String?>,
+    onAddClick: (Map<String, String?>) -> Unit
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        elevation = CardDefaults.cardElevation(4.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(text = "Nombre: ${medicamento["nombre"]}", style = MaterialTheme.typography.bodyLarge)
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Descripción: ${medicamento["descripcion"]}",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Indicaciones: ${medicamento["indicaciones"]}",
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = { onAddClick(medicamento) },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Añadir")
+            }
         }
     }
 }
