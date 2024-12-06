@@ -177,8 +177,8 @@ fun addCita(
     onSuccess: () -> Unit,
     onError: (String) -> Unit
 ) {
-    val firestore = FirebaseFirestore.getInstance()
-    val citaData = mapOf(
+    val db = FirebaseFirestore.getInstance()
+    val nuevaCita = hashMapOf(
         "fecha" to fecha,
         "hora" to hora,
         "especialidad_id" to especialidadId,
@@ -186,13 +186,34 @@ fun addCita(
         "paciente_id" to pacienteId
     )
 
-    firestore.collection("citas")
-        .add(citaData)
-        .addOnSuccessListener { onSuccess() }
-        .addOnFailureListener { exception ->
-            onError(exception.localizedMessage ?: "Error al guardar la cita.")
+    db.collection("citas")
+        .add(nuevaCita)
+        .addOnSuccessListener { documentReference ->
+            val citaId = documentReference.id
+
+            // Crear un resultado médico asociado a esta cita
+            val nuevoResultado = hashMapOf(
+                "fecha" to fecha,
+                "descripcion" to "Resultado generado automáticamente para la cita.",
+                "cita_id" to citaId,
+                "paciente_id" to pacienteId,
+                "archivo_pdf" to "https://firebasestorage.googleapis.com/.../resultado_generico.pdf" // URL genérica
+            )
+
+            db.collection("resultados")
+                .add(nuevoResultado)
+                .addOnSuccessListener {
+                    onSuccess()
+                }
+                .addOnFailureListener { e ->
+                    onError("Cita creada, pero error al generar resultado: ${e.message}")
+                }
+        }
+        .addOnFailureListener { e ->
+            onError("Error al crear cita: ${e.message}")
         }
 }
+
 
 
 // Otros métodos para citas, medicamentos, resultados, etc. pueden agregarse de forma similar.

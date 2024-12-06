@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -17,9 +17,31 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.crm.R
 import com.example.crm.components.BottomNavigationBar
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 
 @Composable
 fun ProfileScreen(navController: NavController) {
+    val userId = FirebaseAuth.getInstance().currentUser?.uid.orEmpty()
+    val userData = remember { mutableStateOf<Map<String, Any>?>(null) }
+    val db = FirebaseFirestore.getInstance()
+    var userRole by remember { mutableStateOf<String?>(null) }
+
+    // Cargar datos del usuario desde Firestore
+    LaunchedEffect(userId) {
+        if (userId.isNotEmpty()) {
+            db.collection("usuarios").document(userId)
+                .get()
+                .addOnSuccessListener { document ->
+                    userData.value = document.data
+                    userRole = document.getString("rol") // Asume que el campo "rol" existe
+                }
+                .addOnFailureListener { e ->
+                    println("Error al cargar datos del usuario: ${e.message}")
+                }
+        }
+    }
+
     Scaffold(
         bottomBar = {
             BottomNavigationBar(navController = navController)
@@ -49,8 +71,10 @@ fun ProfileScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(16.dp))
 
             // Nombre del usuario
+            val userName = userData.value?.get("nombre")?.toString() ?: "Cargando..."
+            val userLastName = userData.value?.get("apellidos")?.toString() ?: ""
             Text(
-                text = "Nombre del Usuario",
+                text = "$userName $userLastName",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
@@ -68,12 +92,29 @@ fun ProfileScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(16.dp))
 
             ProfileOptionItem(
-                title = "Chequeos médicos",
-                icon = painterResource(id = R.drawable.ic_medical_checkups),
-                onClick = { navController.navigate("medical_checkups") }
+                title = "Medicamentos Recetados",
+                icon = painterResource(id = R.drawable.ic_medicine),
+                onClick = { navController.navigate("medications") }
             )
 
             Spacer(modifier = Modifier.height(16.dp))
+
+            ProfileOptionItem(
+                title = "Chequeos médicos",
+                icon = painterResource(id = R.drawable.ic_medical_checkups),
+                onClick = { navController.navigate("checkups") }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Mostrar "Panel Administrativo" solo para administradores
+            if (userRole == "admin") {
+                ProfileOptionItem(
+                    title = "Panel Administrativo",
+                    icon = painterResource(id = R.drawable.ic_team_member),
+                    onClick = { navController.navigate("adminPanel") }
+                )
+            }
         }
     }
 }

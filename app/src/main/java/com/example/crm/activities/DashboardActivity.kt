@@ -6,12 +6,11 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -20,9 +19,9 @@ import androidx.navigation.compose.rememberNavController
 import com.example.crm.components.BottomNavigationBar
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.foundation.lazy.items
+import kotlinx.coroutines.tasks.await
+import java.text.SimpleDateFormat
+import java.util.*
 
 class DashboardActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,9 +49,18 @@ fun DashboardScreen(navController: NavController) {
         ) {
             Text(text = "¡Bienvenido!", style = MaterialTheme.typography.headlineMedium)
             Spacer(modifier = Modifier.height(16.dp))
+
+            // Sección de citas próximas
             Text("Tus citas próximas:")
             Spacer(modifier = Modifier.height(8.dp))
             CitasList(navController)
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Sección de médicos favoritos
+            Text("Tus médicos favoritos:")
+            Spacer(modifier = Modifier.height(8.dp))
+            FavoritosList(navController)
         }
     }
 }
@@ -61,6 +69,8 @@ fun DashboardScreen(navController: NavController) {
 fun CitasList(navController: NavController) {
     val userId = FirebaseAuth.getInstance().currentUser?.uid.orEmpty()
     val citas = remember { mutableStateListOf<Map<String, Any>>() }
+    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+    val today = dateFormat.format(Date())
 
     // Cargar citas desde Firestore
     LaunchedEffect(Unit) {
@@ -71,25 +81,27 @@ fun CitasList(navController: NavController) {
             .addOnSuccessListener { result ->
                 citas.clear()
                 result.forEach { doc ->
-                    val citaData = doc.data.toMutableMap()
-                    citaData["id"] = doc.id
+                    val data = doc.data.toMutableMap()
+                    val fecha = data["fecha"] as? String
+                    if (fecha != null && fecha >= today) { // Solo citas futuras
+                        data["id"] = doc.id
 
-                    // Obtener nombre del médico si está disponible
-                    val medicoId = citaData["medico_id"] as? String
-                    if (!medicoId.isNullOrEmpty()) {
-                        db.collection("medicos").document(medicoId).get()
-                            .addOnSuccessListener { medicoDoc ->
-                                citaData["medico_nombre"] =
-                                    medicoDoc.getString("nombre") ?: "No asignado"
-                                citas.add(citaData)
-                            }
-                            .addOnFailureListener {
-                                citaData["medico_nombre"] = "No asignado"
-                                citas.add(citaData)
-                            }
-                    } else {
-                        citaData["medico_nombre"] = "No asignado"
-                        citas.add(citaData)
+                        // Obtener el nombre del médico
+                        val medicoId = data["medico_id"] as? String
+                        if (!medicoId.isNullOrEmpty()) {
+                            db.collection("medicos").document(medicoId).get()
+                                .addOnSuccessListener { medicoDoc ->
+                                    data["medico_nombre"] = medicoDoc.getString("nombre") ?: "No asignado"
+                                    citas.add(data)
+                                }
+                                .addOnFailureListener {
+                                    data["medico_nombre"] = "No asignado"
+                                    citas.add(data)
+                                }
+                        } else {
+                            data["medico_nombre"] = "No asignado"
+                            citas.add(data)
+                        }
                     }
                 }
             }
@@ -98,14 +110,17 @@ fun CitasList(navController: NavController) {
             }
     }
 
-    // Mostrar citas
-    LazyColumn {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(250.dp) // Controla la altura para permitir espacio para otras secciones
+    ) {
         items(citas.toList()) { cita -> // Usa toList() para asegurarte de que SnapshotStateList sea iterable.
             CitaCard(cita, navController)
         }
     }
-
 }
+
 
 @Composable
 fun CitaCard(cita: Map<String, Any>, navController: NavController) {
@@ -134,22 +149,116 @@ fun CitaCard(cita: Map<String, Any>, navController: NavController) {
     }
 }
 
+@Composable
+fun FavoritosList(navController: NavController) {
+    val userId = FirebaseAuth.getInstance().currentUser?.uid.orEmpty()
+    val favoritos = remember { mutableStateListOf<Map<String, Any>>() }
+
+    // Cargar favoritos desde Firestore
+    LaunchedEffect(Unit) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("favoritos")
+            .whereEqualTo("paciente_id", userId)
+            .get()
+            .addOnSuccessListener { result ->
+                favoritos.clear()
+                result.forEach { doc ->
+                    val medicoId = doc["medico_id"] as? String
+                    if (!medicoId.isNullOrEmpty()) {
+                        // Cargar los datos del médico favorito
+                        db.collection("medicos").document(medicoId).get()
+                            .addOnSuccessListener { medicoDoc ->
+                                val medicoData = medicoDoc.data?.toMutableMap() ?: mutableMapOf()
+                                medicoData["id"] = medicoDoc.id
+                                favoritos.add(medicoData)
+                            }
+                            .addOnFailureListener {
+                                println("Error al cargar médico favorito: ${it.message}")
+                            }
+                    }
+                }
+            }
+            .addOnFailureListener { e ->
+                println("Error al cargar favoritos: ${e.message}")
+            }
+    }
+
+    LazyColumn {
+        items(favoritos.toList()) { favorito ->
+            FavoritoCard(favorito, navController)
+        }
+    }
+}
+
+@Composable
+fun FavoritoCard(medico: Map<String, Any>, navController: NavController) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp)
+            .clickable {
+                val medicoId = medico["id"] as? String
+                if (medicoId != null) {
+                    navController.navigate("medicoDetalle/$medicoId")
+                } else {
+                    println("Error: médico sin id.")
+                }
+            },
+        elevation = CardDefaults.cardElevation(4.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text("Nombre: ${medico["nombre"] ?: "Desconocido"}", style = MaterialTheme.typography.bodyLarge)
+            Text("Apellidos: ${medico["apellidos"] ?: "Desconocido"}", style = MaterialTheme.typography.bodyLarge)
+            Text("Correo: ${medico["correo"] ?: "No disponible"}", style = MaterialTheme.typography.bodySmall)
+        }
+    }
+}
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CitaDetalleScreen(citaId: String, navController: NavController) {
     val cita = remember { mutableStateOf<Map<String, Any>?>(null) }
+    val loading = remember { mutableStateOf(true) }
+    val error = remember { mutableStateOf<String?>(null) }
 
-    // Cargar detalles de la cita
     LaunchedEffect(citaId) {
         val db = FirebaseFirestore.getInstance()
-        db.collection("citas").document(citaId)
-            .get()
-            .addOnSuccessListener { document ->
-                cita.value = document.data
+        val citaData = mutableMapOf<String, Any>()
+        loading.value = true
+        error.value = null
+
+        try {
+            // Cargar datos de la cita
+            val citaSnapshot = db.collection("citas").document(citaId).get().await()
+            val data = citaSnapshot.data
+            if (data != null) {
+                citaData["fecha"] = data["fecha"] ?: "No especificada"
+                citaData["hora"] = data["hora"] ?: "No especificada"
+
+                // Cargar información del médico
+                val medicoId = data["medico_id"] as? String
+                if (!medicoId.isNullOrEmpty()) {
+                    val medicoSnapshot = db.collection("medicos").document(medicoId).get().await()
+                    citaData["medico_nombre"] = medicoSnapshot.getString("nombre") ?: "No asignado"
+                } else {
+                    citaData["medico_nombre"] = "No asignado"
+                }
+
+                // Cargar información de la especialidad
+                val especialidadId = data["especialidad_id"] as? String
+                if (!especialidadId.isNullOrEmpty()) {
+                    val especialidadSnapshot =
+                        db.collection("especialidades").document(especialidadId).get().await()
+                    citaData["especialidad"] = especialidadSnapshot.getString("nombre") ?: "No asignada"
+                } else {
+                    citaData["especialidad"] = "No asignada"
+                }
             }
-            .addOnFailureListener { e ->
-                println("Error al cargar cita: ${e.message}")
-            }
+            cita.value = citaData
+        } catch (e: Exception) {
+            error.value = "Error al cargar los datos: ${e.message}"
+        } finally {
+            loading.value = false
+        }
     }
 
     Scaffold(
@@ -164,20 +273,45 @@ fun CitaDetalleScreen(citaId: String, navController: NavController) {
             )
         }
     ) { paddingValues ->
-        cita.value?.let { cita ->
-            Column(
+        if (loading.value) {
+            Text(
+                text = "Cargando cita...",
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues)
-                    .padding(16.dp)
-            ) {
-                Text("Fecha: ${cita["fecha"] ?: "Sin fecha"}", style = MaterialTheme.typography.headlineSmall)
-                Text("Hora: ${cita["hora"] ?: "Sin hora"}", style = MaterialTheme.typography.headlineSmall)
-                Text("Especialidad: ${cita["especialidad"] ?: "No asignada"}", style = MaterialTheme.typography.bodyLarge)
-                Text("Médico: ${cita["medico_nombre"] ?: "No asignado"}", style = MaterialTheme.typography.bodyLarge)
+                    .padding(16.dp),
+                style = MaterialTheme.typography.bodyLarge
+            )
+        } else if (error.value != null) {
+            Text(
+                text = error.value ?: "Error desconocido",
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues)
+                    .padding(16.dp),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.error
+            )
+        } else {
+            cita.value?.let {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .padding(16.dp)
+                ) {
+                    Text("Fecha: ${it["fecha"]}", style = MaterialTheme.typography.headlineSmall)
+                    Text("Hora: ${it["hora"]}", style = MaterialTheme.typography.headlineSmall)
+                    Text(
+                        "Especialidad: ${it["especialidad"]}",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(
+                        "Médico: ${it["medico_nombre"]}",
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
             }
-        } ?: run {
-            Text("Cargando cita...", modifier = Modifier.padding(16.dp))
         }
     }
 }

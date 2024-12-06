@@ -25,6 +25,7 @@ fun BottomNavigationBar(navController: NavController) {
             .height(64.dp),
         tonalElevation = 8.dp
     ) {
+        // Botón de inicio
         NavigationBarItem(
             icon = {
                 Icon(
@@ -43,6 +44,7 @@ fun BottomNavigationBar(navController: NavController) {
             }
         )
 
+        // Botón de citas
         NavigationBarItem(
             icon = {
                 Icon(
@@ -61,6 +63,7 @@ fun BottomNavigationBar(navController: NavController) {
             }
         )
 
+        // Botón de perfil
         NavigationBarItem(
             icon = {
                 Icon(
@@ -73,6 +76,25 @@ fun BottomNavigationBar(navController: NavController) {
             onClick = {
                 if (currentRoute != "profile") {
                     navController.navigate("profile") {
+                        popUpTo("dashboard")
+                    }
+                }
+            }
+        )
+
+        // Botón de médicos y especialidades
+        NavigationBarItem(
+            icon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_doctor), // Asume que tienes un icono llamado ic_doctor
+                    contentDescription = "Médicos"
+                )
+            },
+            label = { Text("Médicos") },
+            selected = currentRoute == "medicalSearch",
+            onClick = {
+                if (currentRoute != "medicalSearch") {
+                    navController.navigate("medicalSearch") {
                         popUpTo("dashboard")
                     }
                 }

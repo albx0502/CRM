@@ -13,6 +13,8 @@ import com.example.crm.components.BottomNavigationBar
 import com.example.crm.utils.addCita
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.example.crm.components.SimpleDropdownSelector
+
 
 @Composable
 fun SimuladorCitasScreen(navController: NavController) {
@@ -20,23 +22,26 @@ fun SimuladorCitasScreen(navController: NavController) {
 
     var fecha by remember { mutableStateOf("") }
     var hora by remember { mutableStateOf("") }
-    var especialidad by remember { mutableStateOf("") }
-    var medico by remember { mutableStateOf("") }
+    var especialidadId by remember { mutableStateOf("") }
+    var especialidadNombre by remember { mutableStateOf("") }
+    var medicoId by remember { mutableStateOf("") }
+    var medicoNombre by remember { mutableStateOf("") }
     var successMessage by remember { mutableStateOf<String?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
     // Variables para cargar opciones dinámicamente
-    val especialidades = remember { mutableStateListOf<String>() }
-    val medicos = remember { mutableStateListOf<String>() }
+    val especialidades = remember { mutableStateListOf<Pair<String, String>>() }
+    val medicos = remember { mutableStateListOf<Pair<String, String>>() }
 
     // Cargar datos desde Firebase
     LaunchedEffect(Unit) {
         val db = FirebaseFirestore.getInstance()
+
         db.collection("especialidades")
             .get()
             .addOnSuccessListener { result ->
                 especialidades.clear()
-                especialidades.addAll(result.map { it.id })
+                especialidades.addAll(result.map { it.id to (it.getString("nombre") ?: "Desconocida") })
             }
             .addOnFailureListener { e ->
                 errorMessage = "Error al cargar especialidades: ${e.message}"
@@ -46,7 +51,7 @@ fun SimuladorCitasScreen(navController: NavController) {
             .get()
             .addOnSuccessListener { result ->
                 medicos.clear()
-                medicos.addAll(result.map { it.getString("nombre") ?: "Desconocido" })
+                medicos.addAll(result.map { it.id to (it.getString("nombre") ?: "Desconocido") })
             }
             .addOnFailureListener { e ->
                 errorMessage = "Error al cargar médicos: ${e.message}"
@@ -85,34 +90,45 @@ fun SimuladorCitasScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            DropdownSelector(
+            SimpleDropdownSelector(
                 label = "Selecciona una especialidad",
-                options = especialidades,
-                selectedOption = especialidad,
-                onOptionSelected = { especialidad = it }
+                options = especialidades.map { it.second }, // Mostrar nombres
+                selectedOption = especialidadNombre,
+                onOptionSelected = { selected ->
+                    especialidadNombre = selected
+                    especialidadId = especialidades.firstOrNull { it.second == selected }?.first.orEmpty()
+                }
             )
+
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            DropdownSelector(
+            SimpleDropdownSelector(
                 label = "Selecciona un médico",
-                options = medicos,
-                selectedOption = medico,
-                onOptionSelected = { medico = it }
+                options = medicos.map { it.second }, // Mostrar nombres
+                selectedOption = medicoNombre,
+                onOptionSelected = { selected ->
+                    medicoNombre = selected
+                    medicoId = medicos.firstOrNull { it.second == selected }?.first.orEmpty()
+                }
             )
+
 
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
                 onClick = {
-                    if (fecha.isNotEmpty() && hora.isNotEmpty() && especialidad.isNotEmpty() && medico.isNotEmpty()) {
+                    if (fecha.isNotEmpty() && hora.isNotEmpty() && especialidadId.isNotEmpty() && medicoId.isNotEmpty()) {
                         addCita(
                             fecha = fecha,
                             hora = hora,
-                            especialidadId = especialidad,
-                            medicoId = medico,
+                            especialidadId = especialidadId,
+                            medicoId = medicoId,
                             pacienteId = userId,
-                            onSuccess = { successMessage = "Cita creada con éxito."; errorMessage = null },
+                            onSuccess = {
+                                successMessage = "Cita creada con éxito."
+                                errorMessage = null
+                            },
                             onError = { errorMessage = it; successMessage = null }
                         )
                     } else {
@@ -135,42 +151,4 @@ fun SimuladorCitasScreen(navController: NavController) {
     }
 }
 
-@Composable
-fun DropdownSelector(
-    label: String,
-    options: List<String>,
-    selectedOption: String,
-    onOptionSelected: (String) -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) } // Controla si el menú está expandido
 
-    // Caja completa clicable
-    Box(modifier = Modifier.fillMaxWidth().clickable { expanded = true }) {
-        // TextField para mostrar el texto seleccionado
-        OutlinedTextField(
-            value = selectedOption,
-            onValueChange = {},
-            label = { Text(label) },
-            readOnly = true, // Evita la entrada manual
-            modifier = Modifier
-                .fillMaxWidth() // Asegura que ocupe todo el ancho disponible
-                .clickable { expanded = true } // Expande el menú al hacer clic
-        )
-
-        // Menú desplegable
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            options.forEach { option ->
-                DropdownMenuItem(
-                    text = { Text(option) },
-                    onClick = {
-                        onOptionSelected(option)
-                        expanded = false
-                    }
-                )
-            }
-        }
-    }
-}
