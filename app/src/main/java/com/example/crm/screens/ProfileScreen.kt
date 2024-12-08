@@ -130,7 +130,7 @@ fun ProfileScreen(navController: NavController) {
                 ProfileOptionItem(
                     title = "Panel Administrativo",
                     icon = painterResource(id = R.drawable.ic_team_member),
-                    onClick = { navController.navigate("adminPanel") }
+                    onClick = { navController.navigate("medicosEspecialidades") }
                 )
             }
 
