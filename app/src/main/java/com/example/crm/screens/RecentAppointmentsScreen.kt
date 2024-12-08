@@ -8,7 +8,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.google.firebase.auth.FirebaseAuth
@@ -16,18 +18,23 @@ import com.google.firebase.firestore.FirebaseFirestore
 import java.text.SimpleDateFormat
 import java.util.*
 
+/**
+ * **RecentAppointmentsScreen**
+ *
+ * Pantalla que muestra las citas pasadas de un usuario.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecentAppointmentsScreen(navController: NavController) {
-    val userId = FirebaseAuth.getInstance().currentUser?.uid.orEmpty()
-    val recentAppointments = remember { mutableStateListOf<Map<String, Any>>() }
+    val userId = FirebaseAuth.getInstance().currentUser?.uid.orEmpty() // ID de usuario autenticado
+    val recentAppointments = remember { mutableStateListOf<Map<String, Any>>() } // Lista de citas pasadas
     val db = FirebaseFirestore.getInstance()
 
-    // Formato de fecha para comparar
+    // 🔄 Formato de fecha para comparar con la fecha actual
     val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
     val today = dateFormat.format(Date())
 
-    // Cargar citas pasadas
+    // 🚀 Cargar citas pasadas del usuario desde Firestore
     LaunchedEffect(Unit) {
         db.collection("citas")
             .whereEqualTo("paciente_id", userId)
@@ -40,7 +47,6 @@ fun RecentAppointmentsScreen(navController: NavController) {
                     if (fecha != null && fecha < today) { // Solo citas pasadas
                         data["id"] = doc.id
 
-                        // Obtener el nombre del médico
                         val medicoId = data["medico_id"] as? String
                         if (!medicoId.isNullOrEmpty()) {
                             db.collection("medicos").document(medicoId).get()
@@ -80,17 +86,24 @@ fun RecentAppointmentsScreen(navController: NavController) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .padding(16.dp)
+                .padding(16.dp),
+            verticalArrangement = Arrangement.Top,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Mensaje cuando no hay citas recientes
             if (recentAppointments.isEmpty()) {
                 Text(
                     text = "No hay citas recientes.",
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.onBackground
+                    style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
                 )
             } else {
-                LazyColumn {
+                // Lista de citas recientes
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     items(recentAppointments) { appointment ->
                         RecentAppointmentCard(appointment, navController)
                     }
@@ -100,32 +113,42 @@ fun RecentAppointmentsScreen(navController: NavController) {
     }
 }
 
+/**
+ * **RecentAppointmentCard**
+ *
+ * Representa cada cita en la lista de citas recientes.
+ */
 @Composable
 fun RecentAppointmentCard(appointment: Map<String, Any>, navController: NavController) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp)
             .clickable {
                 val citaId = appointment["id"] as? String
                 if (citaId != null) {
                     navController.navigate("citaDetalle/$citaId")
                 }
             },
-        elevation = CardDefaults.cardElevation(4.dp)
+        shape = MaterialTheme.shapes.medium,
+        elevation = CardDefaults.cardElevation(8.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+        ) {
             Text(
                 text = "Fecha: ${appointment["fecha"] ?: "Desconocida"}",
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold
             )
             Text(
                 text = "Hora: ${appointment["hora"] ?: "Desconocida"}",
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyMedium
             )
             Text(
                 text = "Médico: ${appointment["medico_nombre"] ?: "No asignado"}",
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyMedium
             )
         }
     }

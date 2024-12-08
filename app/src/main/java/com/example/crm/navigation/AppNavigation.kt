@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.example.crm.activities.CitaDetalleScreen
+import com.example.crm.screens.CitaDetalleScreen
 import com.example.crm.auth.ForgotPasswordScreen
 import com.example.crm.auth.LoginScreen
 import com.example.crm.auth.RegisterScreen
@@ -19,11 +19,38 @@ import com.example.crm.screens.RecentAppointmentsScreen
 import com.example.screens.SplashScreen
 import com.example.screens.WelcomeScreen
 
+/**
+ * **AppNavigation**
+ *
+ * Define toda la lógica de navegación de la aplicación usando el sistema de navegación de Jetpack Compose.
+ * Cada pantalla tiene una **ruta** asociada, que se usa para navegar entre ellas.
+ *
+ * **Navegación:**
+ * - **startDestination**: La pantalla inicial es `splash`.
+ *
+ * **Pantallas principales:**
+ * - SplashScreen
+ * - WelcomeScreen
+ * - LoginScreen
+ * - RegisterScreen
+ * - ForgotPasswordScreen
+ * - DashboardScreen
+ * - ProfileScreen
+ * - SimuladorCitasScreen
+ * - CitaDetalleScreen
+ * - MedicosEspecialidadesScreen
+ * - RecentAppointmentsScreen
+ * - MedicationsScreen
+ * - MedicalCheckupsScreen
+ * - AdminPanel
+ * - MedicalSearchScreen
+ */
 @Composable
 fun AppNavigation() {
-    val navController = rememberNavController()
+    val navController = rememberNavController() // Controlador de la navegación
 
     NavHost(navController = navController, startDestination = "splash") {
+
         // Pantalla de Splash
         composable("splash") {
             SplashScreen {
@@ -52,7 +79,7 @@ fun AppNavigation() {
         // Pantalla de inicio de sesión
         composable("login") {
             LoginScreen(
-                onLoginSuccess = { userData ->
+                onLoginSuccess = {
                     navController.navigate("dashboard") {
                         popUpTo("login") { inclusive = true }
                     }
@@ -62,21 +89,15 @@ fun AppNavigation() {
             )
         }
 
-
-
         // Pantalla de recuperación de contraseña
         composable("forgotPassword") {
             ForgotPasswordScreen(
-                onSendLinkClick = {
-                    navController.navigate("login") {
-                        popUpTo("forgotPassword") { inclusive = true }
-                    }
-                },
+                onSendLinkClick = { navController.navigate("login") },
                 onBackClick = { navController.navigate("login") }
             )
         }
 
-        // Dashboard principal
+        // Pantalla principal (Dashboard)
         composable("dashboard") {
             DashboardScreen(navController)
         }
@@ -86,43 +107,40 @@ fun AppNavigation() {
             ProfileScreen(navController)
         }
 
-        // Pantalla de calendario
-//        composable("calendar") {
-//            CalendarScreen(navController)
-//        }
-        // Pantalla de simulador de citas
+        // Pantalla de simulación de citas
         composable("simuladorCitas") {
             SimuladorCitasScreen(navController)
         }
+
+        // Pantalla de citas recientes
+        composable("appointments") {
+            RecentAppointmentsScreen(navController)
+        }
+
+        // Pantalla de medicamentos recetados
+        composable("medications") {
+            MedicationsScreen(navController)
+        }
+
+        // Pantalla de chequeos médicos
+        composable("checkups") {
+            MedicalCheckupsScreen(navController)
+        }
+
+        // Pantalla de detalles de cita
         composable("citaDetalle/{citaId}") { backStackEntry ->
             val citaId = backStackEntry.arguments?.getString("citaId") ?: return@composable
             CitaDetalleScreen(citaId = citaId, navController = navController)
         }
-        // Nueva pantalla de médicos y especialidades
-        composable("medicosEspecialidades") {
-            MedicosEspecialidadesScreen()
-        }
 
-
-        composable("appointments") {
-            RecentAppointmentsScreen(navController)
-        }
-        composable("medications") {
-            MedicationsScreen(navController)
-        }
-        composable("checkups") {
-            MedicalCheckupsScreen(navController)
-        }
-        composable("adminPanel") {
-            MedicosEspecialidadesScreen()
-        }
+        // Pantalla de búsqueda de médicos
         composable("medicalSearch") {
             MedicalSearchScreen(navController)
         }
 
-
-
-
-
+        // Pantalla de gestión de médicos y especialidades
+        composable("medicosEspecialidades") {
+            MedicosEspecialidadesScreen()
+        }
     }
 }

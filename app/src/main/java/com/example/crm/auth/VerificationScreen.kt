@@ -18,15 +18,27 @@ import com.example.crm.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+/**
+ * Pantalla de verificación que muestra un mensaje de verificación con dos opciones:
+ * 1. Reenviar el código de verificación.
+ * 2. Crear una nueva contraseña.
+ *
+ * Esta pantalla se podría utilizar en casos donde el usuario necesite verificar su cuenta
+ * o confirmar un código de verificación, por ejemplo, tras una solicitud de recuperación de contraseña.
+ *
+ * @param onResendClick Callback que se ejecuta cuando se hace clic en "Reenviar contraseña".
+ * @param onCreateNewPasswordClick Callback que se ejecuta cuando se hace clic en "Crear nueva contraseña".
+ */
 @Composable
 fun VerificationScreen(
     onResendClick: () -> Unit,
     onCreateNewPasswordClick: () -> Unit
 ) {
-    // Estado para controlar el tiempo de espera antes de reenviar
+    // Estado que controla si el botón de "Reenviar contraseña" está deshabilitado
     var isWaiting by remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
+    // Caja principal que contiene todo el contenido
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -37,12 +49,12 @@ fun VerificationScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
-                .wrapContentHeight(),
+                .wrapContentHeight(), // Ajustar la altura según el contenido
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Imagen en la parte superior
+            // Imagen de verificación en la parte superior
             Image(
-                painter = painterResource(id = R.drawable.ic_verification_image), // Asegúrate de tener este recurso
+                painter = painterResource(id = R.drawable.ic_verification_image), // Reemplazar con la imagen correcta
                 contentDescription = "Imagen de verificación",
                 modifier = Modifier
                     .fillMaxWidth()
@@ -50,17 +62,17 @@ fun VerificationScreen(
                     .padding(bottom = 16.dp)
             )
 
-            // Mensaje de código de verificación
+            // Título de verificación
             Text(
                 text = "Hemos enviado un código de verificación a --***24",
                 style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-                color = Color(0xFF001F54),
+                color = Color(0xFF001F54), // Azul oscuro
                 textAlign = TextAlign.Center
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Subtítulo para indicar opciones en caso de que no se reciba el enlace
+            // Texto explicativo para reenviar el código de verificación
             Text(
                 text = "¿No recibiste el enlace? ¡Reenvía la contraseña a continuación!",
                 style = MaterialTheme.typography.bodyMedium,
@@ -74,18 +86,18 @@ fun VerificationScreen(
             Button(
                 onClick = {
                     if (!isWaiting) {
-                        onResendClick()
-                        isWaiting = true
+                        onResendClick() // Llamada al callback para reenviar la contraseña
+                        isWaiting = true // Deshabilitar el botón mientras se espera
                         coroutineScope.launch {
-                            delay(30000) // Espera 30 segundos antes de permitir otro reenvío
-                            isWaiting = false
+                            delay(30000) // Esperar 30 segundos antes de permitir otro reenvío
+                            isWaiting = false // Rehabilitar el botón
                         }
                     }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(48.dp),
-                enabled = !isWaiting // Deshabilitar el botón si está esperando
+                enabled = !isWaiting // El botón se deshabilita mientras está en espera
             ) {
                 Text(
                     text = if (isWaiting) "Espera 30s para reenviar" else "Reenviar contraseña",
@@ -97,10 +109,10 @@ fun VerificationScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Botón para Crear Nueva Contraseña
+            // Botón para crear una nueva contraseña
             Button(
                 onClick = {
-                    onCreateNewPasswordClick()
+                    onCreateNewPasswordClick() // Llamada al callback para crear una nueva contraseña
                 },
                 modifier = Modifier
                     .fillMaxWidth()

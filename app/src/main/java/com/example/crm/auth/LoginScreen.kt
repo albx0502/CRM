@@ -3,34 +3,38 @@ package com.example.crm.auth
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.crm.R
 import com.example.crm.utils.loginWithFirebase
 
+/**
+ * **LoginScreen**
+ *
+ * Pantalla de inicio de sesión que permite a los usuarios autenticarse.
+ * Incluye campos de entrada para el correo y la contraseña, enlaces para
+ * registro y recuperación de contraseña, y soporte para inicio de sesión con redes sociales.
+ */
 @Composable
 fun LoginScreen(
-    onLoginSuccess: (Map<String, Any>) -> Unit, // Cambiado a Map<String, Any>
-    onRegisterClick: () -> Unit,
-    onForgotPasswordClick: () -> Unit
+    onLoginSuccess: (Map<String, Any>) -> Unit, // Callback para éxito en la autenticación
+    onRegisterClick: () -> Unit, // Callback para ir a la pantalla de registro
+    onForgotPasswordClick: () -> Unit // Callback para ir a la pantalla de recuperación de contraseña
 ) {
+    // Estados para la entrada de datos y mensajes
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-
-    val uriHandler = LocalUriHandler.current
+    var passwordVisible by remember { mutableStateOf(false) } // Estado para alternar visibilidad de la contraseña
 
     Column(
         modifier = Modifier
@@ -39,7 +43,7 @@ fun LoginScreen(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Imagen del logo de la cruz
+        // Logo de la aplicación
         Image(
             painter = painterResource(id = R.drawable.cross_image),
             contentDescription = "Logo",
@@ -52,80 +56,57 @@ fun LoginScreen(
         Text(
             text = "Iniciar Sesión",
             style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-            color = Color(0xFF001F54)
+            color = MaterialTheme.colorScheme.primary
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
         // Campo de texto para el correo
-        BasicTextField(
+        OutlinedTextField(
             value = email,
             onValueChange = { email = it },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp)
-                .height(56.dp),
-            decorationBox = { innerTextField ->
-                Box(
-                    Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                ) {
-                    if (email.isEmpty()) {
-                        Text(
-                            text = "Correo Electrónico",
-                            color = Color.Gray,
-                            fontSize = 16.sp
-                        )
-                    }
-                    innerTextField()
-                }
-            }
+            label = { Text("Correo Electrónico") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         // Campo de texto para la contraseña
-        BasicTextField(
+        OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp)
-                .height(56.dp),
-            visualTransformation = PasswordVisualTransformation(),
-            decorationBox = { innerTextField ->
-                Box(
-                    Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                ) {
-                    if (password.isEmpty()) {
-                        Text(
-                            text = "Contraseña",
-                            color = Color.Gray,
-                            fontSize = 16.sp
-                        )
-                    }
-                    innerTextField()
+            label = { Text("Contraseña") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            trailingIcon = {
+                val icon = if (passwordVisible) R.drawable.ic_visibility_off else R.drawable.ic_visibility
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(
+                        painter = painterResource(id = icon),
+                        contentDescription = if (passwordVisible) "Ocultar contraseña" else "Mostrar contraseña",
+                        tint = Color.Unspecified // No aplica ningún color
+                    )
                 }
             }
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Botón de iniciar sesión
+        // Botón de inicio de sesión
         Button(
             onClick = {
-                // Lógica de login con Firebase
-                loginWithFirebase(
-                    email,
-                    password,
-                    onSuccess = { userData ->
-                        onLoginSuccess(userData) // Ajustado a Map<String, Any>
-                    },
-                    onError = { errorMessage = it }
-                )
+                if (email.isNotBlank() && password.isNotBlank()) {
+                    loginWithFirebase(
+                        email,
+                        password,
+                        onSuccess = { userData -> onLoginSuccess(userData) },
+                        onError = { errorMessage = it }
+                    )
+                } else {
+                    errorMessage = "Por favor, completa ambos campos."
+                }
             },
             modifier = Modifier
                 .fillMaxWidth()
@@ -141,55 +122,19 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Mostrar mensaje de error
-        if (errorMessage != null) {
+        // Mostrar mensaje de error si ocurre
+        errorMessage?.let {
             Text(
-                text = errorMessage!!,
-                color = Color(0xFFF44336),
-                modifier = Modifier.padding(horizontal = 16.dp),
-                fontSize = 14.sp
+                text = it,
+                color = Color.Red,
+                fontSize = 14.sp,
+                modifier = Modifier.padding(horizontal = 16.dp)
             )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Redes sociales
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.ic_facebook),
-                contentDescription = "Facebook",
-                modifier = Modifier
-                    .size(48.dp)
-                    .clickable { uriHandler.openUri("https://www.facebook.com") }
-            )
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Image(
-                painter = painterResource(id = R.drawable.ic_google),
-                contentDescription = "Google",
-                modifier = Modifier
-                    .size(48.dp)
-                    .clickable { uriHandler.openUri("https://www.google.com") }
-            )
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Image(
-                painter = painterResource(id = R.drawable.ic_instagram),
-                contentDescription = "Instagram",
-                modifier = Modifier
-                    .size(48.dp)
-                    .clickable { uriHandler.openUri("https://www.instagram.com") }
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Textos para registrarse y recuperar contraseña
+        // Enlaces de registro y recuperación de contraseña
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
@@ -200,9 +145,6 @@ fun LoginScreen(
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.clickable { onRegisterClick() }
             )
-
-            Spacer(modifier = Modifier.width(16.dp))
-
             Text(
                 text = "¿Olvidaste tu contraseña?",
                 style = MaterialTheme.typography.bodyMedium,
@@ -210,6 +152,33 @@ fun LoginScreen(
                 modifier = Modifier.clickable { onForgotPasswordClick() }
             )
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Sección de redes sociales (placeholder)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceEvenly
+        ) {
+            SocialLoginIcon(R.drawable.ic_facebook, "Facebook")
+            SocialLoginIcon(R.drawable.ic_google, "Google")
+            SocialLoginIcon(R.drawable.ic_instagram, "Instagram")
+        }
     }
 }
 
+/**
+ * **SocialLoginIcon**
+ *
+ * Icono para representar redes sociales en el inicio de sesión.
+ */
+@Composable
+fun SocialLoginIcon(iconResId: Int, description: String) {
+    IconButton(onClick = { /* Acción de inicio de sesión social */ }) {
+        Icon(
+            painter = painterResource(id = iconResId),
+            contentDescription = description,
+            modifier = Modifier.size(48.dp)
+        )
+    }
+}

@@ -3,6 +3,17 @@ package com.example.crm.utils
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 
+/**
+ * **loginWithFirebase**
+ *
+ * Inicia sesión con correo y contraseña.
+ *
+ * **Parámetros:**
+ * - `email`: Correo del usuario.
+ * - `password`: Contraseña del usuario.
+ * - `onSuccess`: Función de éxito, recibe los datos del usuario desde Firestore.
+ * - `onError`: Función de error, recibe el mensaje de error.
+ */
 fun loginWithFirebase(
     email: String,
     password: String,
@@ -22,7 +33,6 @@ fun loginWithFirebase(
             if (task.isSuccessful) {
                 val userId = auth.currentUser?.uid ?: return@addOnCompleteListener
 
-                // Recuperar datos del usuario desde Firestore
                 firestore.collection("usuarios").document(userId).get()
                     .addOnSuccessListener { document ->
                         if (document.exists()) {
@@ -42,6 +52,16 @@ fun loginWithFirebase(
         }
 }
 
+/**
+ * **registerWithFirebase**
+ *
+ * Registra un usuario nuevo con correo y contraseña.
+ *
+ * **Parámetros:**
+ * - `email`, `password`, `nombre`, `apellidos`, `telefono`, `sexo`: Datos del usuario.
+ * - `onSuccess`: Función de éxito.
+ * - `onError`: Función de error.
+ */
 fun registerWithFirebase(
     email: String,
     password: String,
@@ -70,31 +90,34 @@ fun registerWithFirebase(
                     "telefono" to telefono,
                     "sexo" to sexo,
                     "correo" to email,
-                    "rol" to "paciente" // Rol predeterminado
+                    "rol" to "paciente"
                 )
 
-                // Guardar datos del usuario en Firestore
                 firestore.collection("usuarios").document(userId).set(userData)
                     .addOnCompleteListener { dbTask ->
-                        if (dbTask.isSuccessful) {
-                            onSuccess()
-                        } else {
-                            onError(dbTask.exception?.localizedMessage ?: "Error al guardar datos.")
-                        }
+                        if (dbTask.isSuccessful) onSuccess()
+                        else onError(dbTask.exception?.localizedMessage ?: "Error al guardar datos.")
                     }
             } else {
-                val error = task.exception?.localizedMessage ?: "Error desconocido."
-                onError(error)
+                onError(task.exception?.localizedMessage ?: "Error desconocido.")
             }
         }
 }
 
+/**
+ * **logout**
+ *
+ * Cierra la sesión actual del usuario.
+ */
 fun logout() {
     FirebaseAuth.getInstance().signOut()
 }
 
-// NUEVOS MÉTODOS PARA LAS NUEVAS COLECCIONES:
-
+/**
+ * **addUsuario**
+ *
+ * Añade un nuevo usuario a Firestore.
+ */
 fun addUsuario(
     userId: String,
     nombre: String,
@@ -122,6 +145,11 @@ fun addUsuario(
         .addOnFailureListener { onError(it.localizedMessage ?: "Error al agregar usuario.") }
 }
 
+/**
+ * **addMedico**
+ *
+ * Añade un nuevo médico a la colección "medicos".
+ */
 fun addMedico(
     medicoId: String,
     nombre: String,
@@ -148,6 +176,11 @@ fun addMedico(
         .addOnFailureListener { onError(it.localizedMessage ?: "Error al agregar médico.") }
 }
 
+/**
+ * **addEspecialidad**
+ *
+ * Añade una nueva especialidad médica.
+ */
 fun addEspecialidad(
     especialidadId: String,
     nombre: String,
@@ -168,6 +201,11 @@ fun addEspecialidad(
         .addOnFailureListener { onError(it.localizedMessage ?: "Error al agregar especialidad.") }
 }
 
+/**
+ * **addCita**
+ *
+ * Crea una cita médica y genera automáticamente un resultado asociado.
+ */
 fun addCita(
     fecha: String,
     hora: String,
@@ -191,20 +229,17 @@ fun addCita(
         .addOnSuccessListener { documentReference ->
             val citaId = documentReference.id
 
-            // Crear un resultado médico asociado a esta cita
             val nuevoResultado = hashMapOf(
                 "fecha" to fecha,
                 "descripcion" to "Resultado generado automáticamente para la cita.",
                 "cita_id" to citaId,
                 "paciente_id" to pacienteId,
-                "archivo_pdf" to "https://firebasestorage.googleapis.com/.../resultado_generico.pdf" // URL genérica
+                "archivo_pdf" to "https://firebasestorage.googleapis.com/.../resultado_generico.pdf"
             )
 
             db.collection("resultados")
                 .add(nuevoResultado)
-                .addOnSuccessListener {
-                    onSuccess()
-                }
+                .addOnSuccessListener { onSuccess() }
                 .addOnFailureListener { e ->
                     onError("Cita creada, pero error al generar resultado: ${e.message}")
                 }
@@ -213,7 +248,3 @@ fun addCita(
             onError("Error al crear cita: ${e.message}")
         }
 }
-
-
-
-// Otros métodos para citas, medicamentos, resultados, etc. pueden agregarse de forma similar.
